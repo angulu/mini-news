@@ -1,24 +1,43 @@
-import logo from './logo.svg';
+import { useEffect, useState } from 'react';
+import axios from "axios";
+import News from './components/news';
+import Search from './components/search';
 import './App.css';
 
-function App() {
+const App = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [newsList, setNewsList] = useState({data: []});
+
+useEffect(() => {
+  if (!searchQuery) return;
+  const config = {headers: {"x-api-key": process.env.REACT_APP_API_KEY}, params: {q: searchQuery} };
+  axios.get("https://api.newscatcherapi.com/v2/search", config)
+  .then((response) => {
+      setNewsList({data: response.data.articles, isSuccess: true});
+  })
+  .catch((error) => {
+    setNewsList({data: [], isError: true, error: error.response?.data?.message});
+  });
+}, [searchQuery]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <main>
+    <Search handleUseSearchInput={setSearchQuery}/>
+    <hr />
+      <section className='news-section'>
+      {newsList.isSuccess && (
+        <>
+        {newsList.data.map((news, index) => (
+          <News key={index} newDetails={news}/>
+        ))}
+        </>
+      )}
+      {newsList.isError && (
+        <p className='error-message'>{newsList.error}</p>
+      )}
+    </section>
+    
+    </main>
   );
 }
 
